@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>trivia.domisseus</title>
+  <link rel="icon" href="../images/favicon.png" type="image/png">
+  <link rel="stylesheet" href="../base.css">
+  <link rel="stylesheet" href="../dark.css">
+  
+  <style>
+    header h1 { font-size: 2.5rem; margin: 0; }
+    
+    .theme-toggle-container {
+      margin-left: 80px;
+      display: flex;
+      gap: 5px;
+    }
+    
+    .theme-btn {
+      padding: 6px 16px;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .mode-btn { 
+      padding: 20px 15px; 
+      font-size: 1.3rem; 
+      font-family: inherit; 
+      font-weight: bold; 
+      cursor: pointer; 
+      background-color: transparent; 
+      color: inherit; 
+      border: 2px solid #888; 
+      border-radius: 12px; 
+      transition: all 0.2s ease; 
+      width: 100%; 
+    }
+    
+    .mode-btn:hover, #back-btn:hover { 
+      background-color: #888; 
+      color: white; 
+      transform: translateY(-3px); 
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3); 
+    }
+    
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
+</head>
+<body style="background-color: #121212; color: #ffffff;">
+
+<header style="position: relative; text-align: center; padding: 30px 20px; border-bottom: 1px solid #555;">
+  <h1>trivia.domisseus</h1>
+  
+  <div style="position: absolute; right: 20px; top: 20px; display: flex; align-items: center; gap: 15px;">
+    <input type="text" id="player-name-input" placeholder="Enter Name..." maxlength="15" oninput="savePlayerName(this.value)" style="padding: 8px 12px; border-radius: 8px; border: 1px solid #888; background: transparent; color: inherit; font-family: inherit; font-size: 1rem; width: 140px; text-align: center;">
+
+    <div class="theme-toggle-container">
+      <button id="btn-light-theme" class="theme-btn" onclick="setTheme('light')" style="background-color: #ffffff; color: #000000; border: 2px solid #cccccc;">Light</button>
+      <button id="btn-dark-theme" class="theme-btn" onclick="setTheme('dark')" style="background-color: #1a1a1a; color: #ffffff; border: 3px solid #fff;">Dark</button>
+    </div>
+  </div>
+</header>
+
+<main style="padding: 40px 20px; text-align: center; margin-top: 10px;">
+  
+  <div id="active-mode-header" style="display: none; position: relative; max-width: 1000px; margin: 0 auto 30px auto; align-items: center; justify-content: center;">
+    <button id="back-btn" onclick="goBack()" style="position: absolute; left: 0; padding: 12px 25px; font-size: 1.3rem; font-family: inherit; font-weight: bold; cursor: pointer; background: transparent; color: inherit; border: 2px solid #888; border-radius: 10px; transition: 0.2s;">← Back</button>
+    <h2 id="selected-mode-display" style="font-size: 2.2rem; color: #aaa; margin: 0;"></h2>
+  </div>
+
+  <nav id="mode-selector" style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-top: 40px;">
+    <button class="mode-btn" style="width: auto; padding: 20px 30px;" onclick="selectMode('Multiple Choice')">Multiple Choice</button>
+    <button class="mode-btn" style="width: auto; padding: 20px 30px;" onclick="selectMode('3x3 Tic-Tac-Toe')">3x3 Tic-Tac-Toe</button>
+    <button class="mode-btn" style="width: auto; padding: 20px 30px;" onclick="selectMode('10x10 4-in-a-Row')">10x10 4-in-a-Row</button>
+    <button class="mode-btn" style="width: auto; padding: 20px 30px;" onclick="selectMode('Betting')">Betting</button>
+  </nav>
+
+  <div id="category-section" style="display: none; flex-direction: column; align-items: center; gap: 20px; max-width: 1000px; margin-left: auto; margin-right: auto;">
+    <button class="mode-btn" style="width: calc(33.333% - 10px); margin-top: 30px;" onclick="selectCategory('General Knowledge')">General Knowledge</button>
+    <nav id="category-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; width: 100%;">
+      <button class="mode-btn" onclick="selectCategory('History')">History</button>
+      <button class="mode-btn" onclick="selectCategory('Literature & Mythology')">Literature & Mythology</button>
+      <button class="mode-btn" onclick="selectCategory('Geography & Languages')">Geography & Languages</button>
+      <button class="mode-btn" onclick="selectCategory('Biology')">Biology</button>
+      <button class="mode-btn" onclick="selectCategory('Physics')">Physics</button>
+      <button class="mode-btn" onclick="selectCategory('Chemistry')">Chemistry</button>
+      <button class="mode-btn" onclick="selectCategory('Sports')">Sports</button>
+      <button class="mode-btn" onclick="selectCategory('Entertainment')">Entertainment</button>
+      <button class="mode-btn" onclick="selectCategory('Art & Architecture')">Art & Architecture</button>
+      <button class="mode-btn" onclick="selectCategory('Tech & Computers')">Tech & Computers</button>
+      <button class="mode-btn" onclick="selectCategory('Food & Drink')">Food & Drink</button>
+      <button class="mode-btn" onclick="selectCategory('Space & Astronomy')">Space & Astronomy</button>
+    </nav>
+  </div>
+
+  <div id="waiting-screen" style="display: none; flex-direction: column; align-items: center; justify-content: center; margin-top: 60px;">
+    <h2 style="font-size: 2rem; color: #aaa; margin-bottom: 20px;">Waiting for opponent (1/2)...</h2>
+    <div style="border: 4px solid #333; border-top: 4px solid #888; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite;"></div>
+  </div>
+
+  <div id="game-screen" style="display: none; width: 100%; max-width: 100%; margin-top: 20px; align-items: flex-start;">
+    
+    <div style="flex: 1; min-width: 0;"></div>
+    
+    <div style="flex: 0 1 750px; width: 100%; margin: 0 20px; display: flex; flex-direction: column; align-items: center;">
+      
+      <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; border-bottom: 2px solid #555; padding-bottom: 10px; margin-bottom: 20px;">
+        <div style="width: 100px; text-align: left;">
+          <button onclick="leaveGame()" style="padding: 5px 15px; font-size: 1rem; cursor: pointer; background: transparent; color: inherit; border: 1px solid #888; border-radius: 5px;">← Quit</button>
+        </div>
+        <div style="text-align: center; flex-grow: 1;">
+          <h3 id="game-info-display" style="margin: 0; color: #aaa;">Mode - Category</h3>
+          <h4 style="margin: 5px 0 0 0; color: #fff;">Question <span id="question-counter">1</span>/20</h4>
+        </div>
+        <div style="width: 100px; text-align: right;">
+          <h3 style="margin: 0; color: #ff5252; font-size: 1.5rem;">⏱ <span id="timer-display">15</span>s</h3>
+        </div>
+      </div>
+
+      <!-- Question Box -->
+      <div id="question-container" style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px; width: 100%; box-sizing: border-box; margin-bottom: 30px;">
+        <h2 id="question-text" style="margin-top: 0; font-size: 1.8rem;">Loading question...</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px;">
+          <button class="mode-btn" id="opt-0" onclick="submitAnswer(0)" style="width: 100%; padding: 15px; font-size: 1.2rem;">Option A</button>
+          <button class="mode-btn" id="opt-1" onclick="submitAnswer(1)" style="width: 100%; padding: 15px; font-size: 1.2rem;">Option B</button>
+          <button class="mode-btn" id="opt-2" onclick="submitAnswer(2)" style="width: 100%; padding: 15px; font-size: 1.2rem;">Option C</button>
+          <button class="mode-btn" id="opt-3" onclick="submitAnswer(3)" style="width: 100%; padding: 15px; font-size: 1.2rem;">Option D</button>
+        </div>
+      </div>
+
+      <!-- Round Results Screen -->
+      <div id="results-container" style="display: none; background: rgba(255,255,255,0.05); padding-bottom: 15px; border-radius: 10px; width: 100%; box-sizing: border-box; text-align: center;">
+        <h3 style="font-size: 1.5rem; margin-bottom: 25px;  color: #aaa;">Correct Answer: <br><span id="correct-answer-display" style="color: #4caf50; font-size: 2.2rem;">Option A</span></h3>
+        <div id="results-scores-container" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 30px; font-size: 1.5rem; font-weight: bold;">
+          <div id="p1-result-row" style="order: 1;"><span id="p1-name-result" style="color: #4caf50;">Player 1</span>: <span id="p1-points-result" style="color: #fff;">+0</span></div>
+          <div id="p2-result-row" style="order: 2;"><span id="p2-name-result" style="color: #2196f3;">Player 2</span>: <span id="p2-points-result" style="color: #fff;">+0</span></div>
+        </div>
+        <p id="next-question-text" style="font-size: 1.2rem; color: #888;">Next question in <span id="next-timer-display">3</span> seconds...</p>
+        <button id="pause-btn" onclick="togglePause()" class="mode-btn" style="width: auto; padding: 10px 20px; font-size: 1rem;">Pause Game</button>
+      </div>
+
+      <!-- NEW: Final Results Screen -->
+      <div id="final-results-container" style="display: none; background: rgba(255,255,255,0.05); padding: 50px 20px; border-radius: 10px; width: 100%; box-sizing: border-box; text-align: center;">
+        <h2 id="final-winner-title" style="font-size: 3.5rem; margin-top: 0; margin-bottom: 10px;">Game Over!</h2>
+        <h3 style="color: #aaa; font-size: 1.5rem; margin-top: 0;">Final Scores</h3>
+        
+        <div style="display: flex; flex-direction: column; gap: 15px; margin: 40px 0; font-size: 2rem; font-weight: bold;">
+          <div><span id="final-p1-name" style="color: #4caf50;">Player 1</span>: <span id="final-p1-score" style="color: #fff;">0</span> pts</div>
+          <div><span id="final-p2-name" style="color: #2196f3;">Player 2</span>: <span id="final-p2-score" style="color: #fff;">0</span> pts</div>
+        </div>
+
+        <button onclick="leaveGame()" class="mode-btn" style="width: auto; padding: 15px 30px; font-size: 1.2rem;">Return to Main Menu</button>
+      </div>
+
+      <div id="board-container" style="width: 100%; display: flex; justify-content: center;">
+        <h2 style="color: #aaa;">[ Game Board Goes Here ]</h2>
+      </div>
+    </div>
+    
+    <div style="flex: 1; min-width: 0; display: flex; justify-content: flex-end;">
+      <div id="scoreboard-container" style="display: none; margin-top: 30px; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px; width: 250px; flex-shrink: 0; flex-direction: column; gap: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
+        <h2 style="margin: 0; font-size: 1.5rem; text-align: center; border-bottom: 1px solid #555; padding-bottom: 10px;">Scores</h2>
+        <div style="display: flex; justify-content: space-between; font-size: 1.3rem; font-weight: bold;">
+          <span style="color: #4caf50;" id="name-p1">Player 1:</span>
+          <span id="score-p1">0</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 1.3rem; font-weight: bold;">
+          <span style="color: #2196f3;" id="name-p2">Player 2:</span>
+          <span id="score-p2">0</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 1.1rem; color: #ff9800; font-weight: bold; margin-top: 10px; border-top: 1px solid #555; padding-top: 10px;">
+          <span>🔥 Your Streak:</span>
+          <span id="streak-display">0</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</main>
+<script type="module" src="trivia.js"></script>
+</body>
+</html>
