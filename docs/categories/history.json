@@ -1,0 +1,152 @@
+[
+  {
+    "question": "In what year did the Berlin Wall fall?",
+    "options": ["1987", "1989", "1991", "1993"],
+    "answerIndex": 1
+  },
+  {
+    "question": "Which ancient civilization is credited with inventing paper?",
+    "options": ["Roman", "Egyptian", "Greek", "Chinese"],
+    "answerIndex": 3
+  },
+  {
+    "question": "Who was the first Emperor of Rome?",
+    "options": ["Julius Caesar", "Nero", "Augustus", "Caligula"],
+    "answerIndex": 2
+  },
+  {
+    "question": "What is the shortest war in recorded history, lasting only 38 to 45 minutes?",
+    "options": ["The Anglo-Zanzibar War", "The Six-Day War", "The Falklands War", "The Football War"],
+    "answerIndex": 0
+  },
+  {
+    "question": "In which year did the French Revolution begin?",
+    "options": ["1776", "1789", "1812", "1848"],
+    "answerIndex": 1
+  },
+  {
+    "question": "Which volcano erupted in 79 AD, destroying the city of Pompeii?",
+    "options": ["Mount Etna", "Mount Vesuvius", "Mount Olympus", "Mount Fuji"],
+    "answerIndex": 1
+  },
+  {
+    "question": "What was the name of the ship that brought the Pilgrims to America in 1620?",
+    "options": ["Santa Maria", "Endeavour", "Mayflower", "Beagle"],
+    "answerIndex": 2
+  },
+  {
+    "question": "In what year was the Magna Carta signed?",
+    "options": ["1066", "1215", "1492", "1603"],
+    "answerIndex": 1
+  },
+  {
+    "question": "Which Roman leader was famously assassinated on the Ides of March?",
+    "options": ["Mark Antony", "Augustus", "Julius Caesar", "Pompey"],
+    "answerIndex": 2
+  },
+  {
+    "question": "Which treaty officially ended World War I?",
+    "options": ["Treaty of Paris", "Treaty of Versailles", "Treaty of Tordesillas", "Treaty of Ghent"],
+    "answerIndex": 1
+  },
+  {
+    "question": "What was the capital city of the Aztec Empire?",
+    "options": ["Cusco", "Tenochtitlan", "Chichen Itza", "Machu Picchu"],
+    "answerIndex": 1
+  },
+  {
+    "question": "Who was the first female Prime Minister of the United Kingdom?",
+    "options": ["Theresa May", "Indira Gandhi", "Margaret Thatcher", "Angela Merkel"],
+    "answerIndex": 2
+  },
+  {
+    "question": "The Hundred Years' War was primarily fought between which two countries?",
+    "options": ["Spain and Portugal", "England and France", "Germany and Russia", "Italy and Greece"],
+    "answerIndex": 1
+  },
+  {
+    "question": "Which country gifted the Statue of Liberty to the United States?",
+    "options": ["Great Britain", "Spain", "France", "Netherlands"],
+    "answerIndex": 2
+  },
+  {
+    "question": "In what year did the Titanic sink?",
+    "options": ["1905", "1912", "1918", "1923"],
+    "answerIndex": 1
+  },
+  {
+    "question": "Where did the Industrial Revolution originate?",
+    "options": ["United States", "Germany", "France", "Great Britain"],
+    "answerIndex": 3
+  },
+  {
+    "question": "Who was the first human to journey into outer space?",
+    "options": ["Neil Armstrong", "Buzz Aldrin", "Yuri Gagarin", "John Glenn"],
+    "answerIndex": 2
+  },
+  {
+    "question": "What was the primary trade route connecting China to the West?",
+    "options": ["The Spice Route", "The Silk Road", "The Amber Road", "The Incense Route"],
+    "answerIndex": 1
+  },
+  {
+    "question": "Who founded the Mongol Empire?",
+    "options": ["Kublai Khan", "Attila the Hun", "Genghis Khan", "Tamerlane"],
+    "answerIndex": 2
+  },
+  {
+    "question": "In what year did the attack on Pearl Harbor occur?",
+    "options": ["1939", "1941", "1943", "1945"],
+    "answerIndex": 1
+  },
+  {
+    "question": "Which ancient wonder was located in Alexandria, Egypt?",
+    "options": ["Hanging Gardens", "Colossus", "Lighthouse", "Mausoleum"],
+    "answerIndex": 2
+  },
+  {
+    "question": "Who wrote the 'Communist Manifesto' alongside Friedrich Engels?",
+    "options": ["Vladimir Lenin", "Joseph Stalin", "Leon Trotsky", "Karl Marx"],
+    "answerIndex": 3
+  },
+  {
+    "question": "What was the capital of the Byzantine Empire?",
+    "options": ["Rome", "Athens", "Constantinople", "Alexandria"],
+    "answerIndex": 2
+  },
+  {
+    "question": "Which historical figure was known as the 'Maid of Orléans'?",
+    "options": ["Marie Antoinette", "Joan of Arc", "Eleanor of Aquitaine", "Catherine de' Medici"],
+    "answerIndex": 1
+  },
+  {
+    "question": "Nelson Mandela became the first black president of which country?",
+    "options": ["Kenya", "Nigeria", "South Africa", "Zimbabwe"],
+    "answerIndex": 2
+  },
+  {
+    "question": "What language did the ancient Romans primarily speak?",
+    "options": ["Greek", "Latin", "Aramaic", "Italian"],
+    "answerIndex": 1
+  },
+  {
+    "question": "In what year did the Soviet Union officially collapse?",
+    "options": ["1989", "1991", "1993", "1995"],
+    "answerIndex": 1
+  },
+  {
+    "question": "Who was the second President of the United States?",
+    "options": ["Thomas Jefferson", "Alexander Hamilton", "John Adams", "James Madison"],
+    "answerIndex": 2
+  },
+  {
+    "question": "What ancient city is famous for the legendary Trojan War?",
+    "options": ["Sparta", "Athens", "Troy", "Thebes"],
+    "answerIndex": 2
+  },
+  {
+    "question": "Which European explorer first reached India by sea in 1498?",
+    "options": ["Christopher Columbus", "Ferdinand Magellan", "Vasco da Gama", "Bartholomew Diaz"],
+    "answerIndex": 2
+  }
+]

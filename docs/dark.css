@@ -1,0 +1,88 @@
+/* ----------------- DARK MODE THEME ----------------- */
+/* Save this file in your ROOT folder */
+
+/* 1. Theme Controls (Top Right Buttons) */
+#theme-controls {
+    grid-column: 3;
+    justify-self: center; 
+    align-self: end;
+    display: flex;
+    gap: 10px;
+}
+
+.theme-btn {
+  padding: 8px 15px;
+  font-family: "Segoe Script", cursive;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  opacity: 0.7;
+  border: 2px solid transparent; 
+}
+
+.theme-btn:hover {
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+/* Light Button */
+#lightBtn {
+  background-color: #ffffff;
+  color: #000000;
+  border-color: #cccccc;
+}
+
+/* Dark Button */
+#darkBtn {
+  background-color: #1a1a1a;
+  color: #ffffff;
+  border-color: #555555;
+}
+
+/* Active State */
+.theme-btn.active {
+  opacity: 1;
+  border-width: 3px;
+  transform: scale(1.1);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+
+#lightBtn.active { border-color: #333; }
+#darkBtn.active { border-color: #fff; }
+
+/* 2. Dark Mode Overrides (When body has class="dark-mode") */
+body.dark-mode {
+  background-color: #1a1a1a;
+  color: #f0f0f0;
+}
+
+body.dark-mode h1, 
+body.dark-mode .continent-title,
+body.dark-mode label {
+  color: #f0f0f0;
+  border-bottom-color: #555; 
+}
+
+body.dark-mode input[type="text"] {
+  background-color: #333;
+  color: #fff;
+  border-color: #555;
+}
+
+/* Generic Buttons Dark Mode */
+body.dark-mode .buttonGroup button,
+body.dark-mode #openInfoButton,
+body.dark-mode #openFormButton,
+body.dark-mode #resetBtn,
+body.dark-mode #backButton {
+    background-color: #444;
+    color: #fff;
+    border: 1px solid #666;
+}
+
+body.dark-mode .buttonGroup button:hover,
+body.dark-mode #backButton:hover {
+    background-color: #555;
+}
