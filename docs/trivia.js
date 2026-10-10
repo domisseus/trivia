@@ -1,6 +1,6 @@
 // --- FIREBASE IMPORTS ---
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
-import { getDatabase, ref, set, get, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-database.js";
+import { getDatabase, ref, set, get, onValue, update, remove, onDisconnect } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCMJj82WWXjy-CbSnq3s9osmXcaxEzLCGA",
@@ -126,6 +126,8 @@ window.selectCategory = async function(categoryName) {
         startingP2Streak = savedGame.p2Streak || 0;
         savedQuestionOrder = savedGame.questionOrder; 
         
+        // Let the loading screen show while reconnecting
+        waitingScreen.style.display = 'flex';
         startGame(savedGame.gameId, savedGame.role, startingQuestion, startingP1Score, startingP2Score, savedQuestionOrder, startingP1Streak, startingP2Streak);
         return; 
       } else {
@@ -154,9 +156,14 @@ window.selectCategory = async function(categoryName) {
     startGame(gameId, "Player 2", 1, 0, 0, null, 0, 0);
   } else {
     await set(queueRef, { playerId: myPlayerId });
+    
+    // NEW: Ghost-Prevention - if you close your tab, Firebase auto-deletes the queue
+    onDisconnect(queueRef).remove(); 
+
     onValue(queueRef, (snap) => {
       const data = snap.val();
       if (data && data.gameId) {
+        onDisconnect(queueRef).cancel(); // Don't delete the queue anymore, game is starting
         startGame(data.gameId, "Player 1", 1, 0, 0, null, 0, 0);
         remove(queueRef);
       }
@@ -206,16 +213,13 @@ function updateStreakDisplay() {
 }
 
 async function startGame(gameId, playerRole, startingQuestion, p1Score, p2Score, savedOrder, p1Streak, p2Streak) {
-  waitingScreen.style.display = 'none';
-  activeModeHeader.style.display = 'none';
-  
   const fileName = chosenCategory.toLowerCase().replace(/[^a-z0-9]+/g, '_') + '.json';
   try {
     const response = await fetch(`categories/${fileName}`);
     if (!response.ok) throw new Error("File not found");
     currentQuestions = await response.json();
   } catch (error) {
-    alert("Questions for this category are not ready yet!");
+    alert("Could not load questions. Ensure your history.json file is pushed to GitHub!");
     window.leaveGame();
     return;
   }
@@ -251,9 +255,20 @@ async function startGame(gameId, playerRole, startingQuestion, p1Score, p2Score,
       finalizeGameStart(startingQuestion, p1Score, p2Score, p1Streak, p2Streak);
     } else {
       const gameRef = ref(db, `games/${currentGameId}`);
+      
+      // NEW: Ghost-Buster! If Player 1 is an old ghost and never starts the game, destroy the queue.
+      const ghostTimeout = setTimeout(() => {
+        alert("The opponent disconnected. Please click History again to start fresh!");
+        const safeMode = chosenMode.replace(/[^a-zA-Z0-9]/g, '');
+        const safeCat = chosenCategory.replace(/[^a-zA-Z0-9]/g, '');
+        remove(ref(db, `queues/${safeMode}/${safeCat}`));
+        window.leaveGame();
+      }, 5000);
+
       const unsubscribe = onValue(gameRef, (snap) => {
         const data = snap.val();
         if (data && data.questionOrder) {
+          clearTimeout(ghostTimeout); // Player 1 is alive! Stop the timeout.
           questionOrder = data.questionOrder;
           unsubscribe(); 
           finalizeGameStart(data.currentQuestion, data.p1Score, data.p2Score, p1Streak, p2Streak);
@@ -264,6 +279,10 @@ async function startGame(gameId, playerRole, startingQuestion, p1Score, p2Score,
 }
 
 function finalizeGameStart(startingQuestion, p1Score, p2Score, p1Streak, p2Streak) {
+  // We finally hide the waiting screen ONLY when the game is 100% ready to render
+  waitingScreen.style.display = 'none';
+  activeModeHeader.style.display = 'none';
+  
   currentQuestionNum = startingQuestion;
   player1Score = p1Score;
   player2Score = p2Score;
@@ -595,6 +614,10 @@ window.leaveGame = function() {
   currentPlayerRole = ""; 
   hasAnsweredThisRound = false;
   isShowingResults = false;
+  
+  // Make sure the waiting screen resets properly if you leave mid-queue
+  waitingScreen.style.display = 'none'; 
+  
   gameScreen.style.display = 'none';
   scoreboardContainer.style.display = 'none';
   finalResultsContainer.style.display = 'none';
