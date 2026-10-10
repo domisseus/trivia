@@ -4,19 +4,32 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>trivia.domisseus</title>
-  <link rel="icon" href="../images/favicon.png" type="image/png">
-  <link rel="stylesheet" href="../base.css">
-  <link rel="stylesheet" href="../dark.css">
+  
+  <link rel="icon" href="images/favicon.png" type="image/png">
+  <link rel="stylesheet" href="base.css">
+  <link rel="stylesheet" href="dark.css">
   
   <style>
-    * {
+    /* Default Cursive Font */
+    body:not(.font-sans):not(.font-serif):not(.font-mono) * {
       font-family: "Segoe Script", cursive !important;
+    }
+    /* Sans-Serif Font */
+    body.font-sans * {
+      font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+    }
+    /* Serif Font */
+    body.font-serif * {
+      font-family: Georgia, "Times New Roman", serif !important;
+    }
+    /* Monospace Font */
+    body.font-mono * {
+      font-family: "Courier New", Courier, monospace !important;
     }
 
     header h1 { font-size: 2.5rem; margin: 0; font-weight: bold; }
     
     .theme-toggle-container {
-      margin-left: 80px;
       display: flex;
       gap: 5px;
     }
@@ -58,13 +71,21 @@
 <header style="position: relative; text-align: center; padding: 30px 20px; border-bottom: 1px solid #555;">
   <h1>trivia.domisseus</h1>
   
-  <div style="position: absolute; right: 20px; top: 20px; display: flex; align-items: center; gap: 15px;">
-    <input type="text" id="player-name-input" placeholder="Enter Name..." maxlength="15" oninput="savePlayerName(this.value)" style="padding: 8px 12px; border-radius: 8px; border: 1px solid #888; background: transparent; color: inherit; font-size: 1.2rem; font-weight: bold; width: 140px; text-align: center;">
+  <!-- Grouped Top Right Controls -->
+  <div style="position: absolute; right: 20px; top: 20px; display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+    
+    <div style="display: flex; align-items: center; gap: 15px;">
+      <input type="text" id="player-name-input" placeholder="Enter Name..." maxlength="15" oninput="savePlayerName(this.value)" style="padding: 8px 12px; border-radius: 8px; border: 1px solid #888; background: transparent; color: inherit; font-size: 1.2rem; font-weight: bold; width: 140px; text-align: center;">
 
-    <div class="theme-toggle-container">
-      <button id="btn-light-theme" class="theme-btn" onclick="setTheme('light')" style="background-color: #ffffff; color: #000000; border: 2px solid #cccccc;">Light</button>
-      <button id="btn-dark-theme" class="theme-btn" onclick="setTheme('dark')" style="background-color: #1a1a1a; color: #ffffff; border: 2px solid #888;">Dark</button>
+      <div class="theme-toggle-container">
+        <button id="btn-light-theme" class="theme-btn" onclick="setTheme('light')" style="background-color: #ffffff; color: #000000; border: 2px solid #cccccc;">Light</button>
+        <button id="btn-dark-theme" class="theme-btn" onclick="setTheme('dark')" style="background-color: #1a1a1a; color: #ffffff; border: 3px solid #fff;">Dark</button>
+      </div>
     </div>
+    
+    <!-- NEW: Font Toggle Button -->
+    <button id="font-toggle-btn" class="theme-btn" onclick="cycleFont()" style="background-color: transparent; border: 1px solid #888; color: inherit; padding: 4px 15px; font-weight: normal; font-size: 1rem;">Font: Curs</button>
+  
   </div>
 </header>
 
@@ -102,7 +123,9 @@
 
   <div id="waiting-screen" style="display: none; flex-direction: column; align-items: center; justify-content: center; margin-top: 60px;">
     <h2 style="font-size: 2rem; color: #aaa; margin-bottom: 20px; font-weight: bold;">Waiting for opponent (1/2)...</h2>
-    <div style="border: 4px solid #333; border-top: 4px solid #888; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite;"></div>
+    <div style="border: 4px solid #333; border-top: 4px solid #888; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 30px;"></div>
+    <!-- NEW: Cancel Matchmaking Button -->
+    <button onclick="cancelMatchmaking()" class="mode-btn" style="width: auto; padding: 10px 25px; font-size: 1.2rem;">Cancel</button>
   </div>
 
   <div id="game-screen" style="display: none; width: 100%; max-width: 100%; margin-top: 20px; align-items: flex-start;">
@@ -149,8 +172,8 @@
         <h3 style="color: #aaa; font-size: 1.5rem; margin-top: 0; font-weight: bold;">Final Scores</h3>
         
         <div style="display: flex; flex-direction: column; gap: 15px; margin: 40px 0; font-size: 2rem; font-weight: bold;">
-          <div><span id="final-p1-name" style="color: #4caf50;">Player 1</span>: <span id="final-p1-score" style="color: #fff;">0</span> pts</div>
-          <div><span id="final-p2-name" style="color: #2196f3;">Player 2</span>: <span id="final-p2-score" style="color: #fff;">0</span> pts</div>
+          <div id="final-p1-row" style="order: 1;"><span id="final-p1-name" style="color: #4caf50;">Player 1</span>: <span id="final-p1-score" style="color: #fff;">0</span> pts</div>
+          <div id="final-p2-row" style="order: 2;"><span id="final-p2-name" style="color: #2196f3;">Player 2</span>: <span id="final-p2-score" style="color: #fff;">0</span> pts</div>
         </div>
 
         <button onclick="leaveGame()" class="mode-btn" style="width: auto; padding: 15px 30px; font-size: 1.4rem;">Return to Main Menu</button>

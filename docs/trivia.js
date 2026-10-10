@@ -16,7 +16,34 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// --- THEME LOGIC ---
+// --- THEME & FONT LOGIC ---
+const fonts = ['Curs', 'Sans', 'Serif', 'Mono'];
+let currentFontIndex = 0;
+
+const savedFont = localStorage.getItem('trivia_font');
+if (savedFont) {
+    currentFontIndex = fonts.indexOf(savedFont);
+    if (currentFontIndex === -1) currentFontIndex = 0;
+}
+
+window.applyFont = function() {
+    const fontName = fonts[currentFontIndex];
+    document.body.className = document.body.className.replace(/font-\w+/g, '').trim();
+    if (fontName !== 'Curs') {
+        document.body.classList.add(`font-${fontName.toLowerCase()}`);
+    }
+    const fontBtn = document.getElementById('font-toggle-btn');
+    if (fontBtn) fontBtn.textContent = `Font: ${fontName}`;
+};
+
+window.cycleFont = function() {
+    currentFontIndex = (currentFontIndex + 1) % fonts.length;
+    localStorage.setItem('trivia_font', fonts[currentFontIndex]);
+    window.applyFont();
+};
+
+window.applyFont(); // Apply immediately on load
+
 window.setTheme = function(theme) {
   const btnLight = document.getElementById('btn-light-theme');
   const btnDark = document.getElementById('btn-dark-theme');
@@ -39,10 +66,10 @@ let chosenMode = "";
 let chosenCategory = "";
 let currentPlayerRole = ""; 
 
-// MULTIPLAYER SYNC VARIABLES
 let currentGameId = "";
 let hasAnsweredThisRound = false;
 let isShowingResults = false;
+let activeQueueRef = null; // Used so we can cancel matchmaking
 
 let myPlayerId = localStorage.getItem('trivia_player_id');
 if (!myPlayerId) {
@@ -60,15 +87,12 @@ window.savePlayerName = function(name) {
   myPlayerName = name.trim();
   localStorage.setItem('trivia_player_name', myPlayerName);
   
-  const nameP1Display = document.getElementById('name-p1');
-  const nameP2Display = document.getElementById('name-p2');
-  
-  if (nameP1Display && nameP2Display && currentPlayerRole !== "") {
-    if (currentPlayerRole === "Player 1") {
-        nameP1Display.textContent = (myPlayerName || "Player 1") + ":";
-    } else {
-        nameP2Display.textContent = (myPlayerName || "Player 2") + ":";
-    }
+  if (currentGameId && currentPlayerRole !== "") {
+      if (currentPlayerRole === "Player 1") {
+          update(ref(db, `games/${currentGameId}`), { p1Name: myPlayerName || "Player 1" });
+      } else {
+          update(ref(db, `games/${currentGameId}`), { p2Name: myPlayerName || "Player 2" });
+      }
   }
 };
 
@@ -79,7 +103,6 @@ const categorySection = document.getElementById('category-section');
 const waitingScreen = document.getElementById('waiting-screen');
 const scoreboardContainer = document.getElementById('scoreboard-container');
 
-// Elements for Results
 const questionContainer = document.getElementById('question-container');
 const resultsContainer = document.getElementById('results-container');
 const finalResultsContainer = document.getElementById('final-results-container');
@@ -114,10 +137,8 @@ window.selectCategory = async function(categoryName) {
   const savedGameStr = localStorage.getItem('active_trivia_game');
   if (savedGameStr) {
     const savedGame = JSON.parse(savedGameStr);
-    
     if (savedGame.mode === chosenMode && savedGame.category === chosenCategory) {
       const wantToReconnect = confirm(`You left an unfinished game at Question ${savedGame.questionNum || 1}. Do you want to reconnect?`);
-      
       if (wantToReconnect) {
         startingQuestion = savedGame.questionNum || 1; 
         startingP1Score = savedGame.p1Score || 0;
@@ -126,7 +147,6 @@ window.selectCategory = async function(categoryName) {
         startingP2Streak = savedGame.p2Streak || 0;
         savedQuestionOrder = savedGame.questionOrder; 
         
-        // Let the loading screen show while reconnecting
         waitingScreen.style.display = 'flex';
         startGame(savedGame.gameId, savedGame.role, startingQuestion, startingP1Score, startingP2Score, savedQuestionOrder, startingP1Streak, startingP2Streak);
         return; 
@@ -147,28 +167,45 @@ window.selectCategory = async function(categoryName) {
   const safeCategoryName = chosenCategory.replace(/[^a-zA-Z0-9]/g, '');
   const queuePath = `queues/${safeModeName}/${safeCategoryName}`;
   const queueRef = ref(db, queuePath);
-  
+  activeQueueRef = queueRef; // Store globally so we can cancel it
+
   const snapshot = await get(queueRef);
+  const queueData = snapshot.val();
   
-  if (snapshot.exists() && snapshot.val().playerId !== myPlayerId) {
+  if (queueData && queueData.playerId !== myPlayerId && !queueData.gameId) {
     const gameId = "game_" + Date.now();
     await update(queueRef, { gameId: gameId });
     startGame(gameId, "Player 2", 1, 0, 0, null, 0, 0);
   } else {
-    await set(queueRef, { playerId: myPlayerId });
+    // FIX: Removed the invisible looping bug! It now safely rejects you if busy.
+    if (queueData && queueData.gameId) {
+       alert("This category is currently busy matching other players! Try again in a few seconds.");
+       waitingScreen.style.display = 'none';
+       categorySection.style.display = 'flex';
+       return;
+    }
     
-    // NEW: Ghost-Prevention - if you close your tab, Firebase auto-deletes the queue
+    await set(queueRef, { playerId: myPlayerId });
     onDisconnect(queueRef).remove(); 
 
     onValue(queueRef, (snap) => {
       const data = snap.val();
       if (data && data.gameId) {
-        onDisconnect(queueRef).cancel(); // Don't delete the queue anymore, game is starting
+        onDisconnect(queueRef).cancel(); 
         startGame(data.gameId, "Player 1", 1, 0, 0, null, 0, 0);
-        remove(queueRef);
+        remove(queueRef); 
       }
     });
   }
+};
+
+window.cancelMatchmaking = function() {
+    if (activeQueueRef) {
+        remove(activeQueueRef); // Delete my waiting queue in Firebase
+        onDisconnect(activeQueueRef).cancel();
+    }
+    waitingScreen.style.display = 'none';
+    categorySection.style.display = 'flex';
 };
 
 // --- GAME START & TIMERS ---
@@ -188,7 +225,6 @@ const maxQuestions = 20;
 let timerInterval;
 let timeLeft = 15;
 
-// Shared Pause Timer Variables
 let nextQuestionInterval;
 let nextQuestionTimeLeft = 3;
 let isGamePaused = false;
@@ -235,8 +271,8 @@ async function startGame(gameId, playerRole, startingQuestion, p1Score, p2Score,
       shuffleArray(questionOrder);
     }
     
-    // Player 1 creates the base game node in Firebase
     await update(ref(db, `games/${currentGameId}`), {
+      p1Name: myPlayerName || "Player 1",
       questionOrder: questionOrder,
       currentQuestion: startingQuestion || 1,
       p1Answer: -2, 
@@ -250,13 +286,16 @@ async function startGame(gameId, playerRole, startingQuestion, p1Score, p2Score,
     
     finalizeGameStart(startingQuestion || 1, p1Score || 0, p2Score || 0, p1Streak || 0, p2Streak || 0);
   } else {
+    update(ref(db, `games/${currentGameId}`), {
+      p2Name: myPlayerName || "Player 2"
+    });
+
     if (savedOrder && savedOrder.length > 0) {
       questionOrder = savedOrder;
       finalizeGameStart(startingQuestion, p1Score, p2Score, p1Streak, p2Streak);
     } else {
       const gameRef = ref(db, `games/${currentGameId}`);
       
-      // NEW: Ghost-Buster! If Player 1 is an old ghost and never starts the game, destroy the queue.
       const ghostTimeout = setTimeout(() => {
         alert("The opponent disconnected. Please click History again to start fresh!");
         const safeMode = chosenMode.replace(/[^a-zA-Z0-9]/g, '');
@@ -268,7 +307,7 @@ async function startGame(gameId, playerRole, startingQuestion, p1Score, p2Score,
       const unsubscribe = onValue(gameRef, (snap) => {
         const data = snap.val();
         if (data && data.questionOrder) {
-          clearTimeout(ghostTimeout); // Player 1 is alive! Stop the timeout.
+          clearTimeout(ghostTimeout); 
           questionOrder = data.questionOrder;
           unsubscribe(); 
           finalizeGameStart(data.currentQuestion, data.p1Score, data.p2Score, p1Streak, p2Streak);
@@ -279,7 +318,6 @@ async function startGame(gameId, playerRole, startingQuestion, p1Score, p2Score,
 }
 
 function finalizeGameStart(startingQuestion, p1Score, p2Score, p1Streak, p2Streak) {
-  // We finally hide the waiting screen ONLY when the game is 100% ready to render
   waitingScreen.style.display = 'none';
   activeModeHeader.style.display = 'none';
   
@@ -297,16 +335,6 @@ function finalizeGameStart(startingQuestion, p1Score, p2Score, p1Streak, p2Strea
   updateStreakDisplay();
   gameInfoDisplay.textContent = `${chosenMode} - ${chosenCategory}`;
   
-  const nameP1Display = document.getElementById('name-p1');
-  const nameP2Display = document.getElementById('name-p2');
-  if (currentPlayerRole === "Player 1") {
-      nameP1Display.textContent = (myPlayerName || "Player 1") + ":";
-      nameP2Display.textContent = "Player 2:";
-  } else {
-      nameP1Display.textContent = "Player 1:";
-      nameP2Display.textContent = (myPlayerName || "Player 2") + ":";
-  }
-  
   if (chosenMode === 'Multiple Choice') {
     boardContainer.style.display = 'none';
   } else {
@@ -317,12 +345,13 @@ function finalizeGameStart(startingQuestion, p1Score, p2Score, p1Streak, p2Strea
   scoreboardContainer.style.display = 'flex'; 
   finalResultsContainer.style.display = 'none';
   
-  // LIVE FIREBASE LISTENER
   onValue(ref(db, `games/${currentGameId}`), (snap) => {
     const data = snap.val();
     if (!data) return;
 
-    // 1. Synchronized Pausing
+    if (data.p1Name) document.getElementById('name-p1').textContent = data.p1Name + ":";
+    if (data.p2Name) document.getElementById('name-p2').textContent = data.p2Name + ":";
+
     isGamePaused = data.isPaused || false;
     const pauseBtn = document.getElementById('pause-btn');
     const nextText = document.getElementById('next-question-text');
@@ -339,13 +368,11 @@ function finalizeGameStart(startingQuestion, p1Score, p2Score, p1Streak, p2Strea
       }
     }
 
-    // 2. Transition to Results
     if (data.p1Answer !== -2 && data.p2Answer !== -2 && !isShowingResults && !data.gameOver) {
       isShowingResults = true;
       showMultiplayerResults(data);
     }
 
-    // 3. Move to Next Question
     if (data.currentQuestion > currentQuestionNum && !data.gameOver) {
       currentQuestionNum = data.currentQuestion;
       isShowingResults = false;
@@ -354,7 +381,6 @@ function finalizeGameStart(startingQuestion, p1Score, p2Score, p1Streak, p2Strea
       startTimer();
     }
     
-    // 4. End Game
     if (data.gameOver) {
        clearInterval(timerInterval);
        clearInterval(nextQuestionInterval);
@@ -394,7 +420,6 @@ function startNextQuestionCountdown() {
                p2Score: player2Score
             });
          } else {
-            // Signal Game Over!
             update(ref(db, `games/${currentGameId}`), { gameOver: true });
          }
       }
@@ -456,7 +481,6 @@ function startTimer() {
          window.submitAnswer(-1); 
       }
       
-      // Peer-to-Peer Enforcer Logic
       get(ref(db, `games/${currentGameId}`)).then((snap) => {
          const data = snap.val();
          if (data && !data.gameOver) {
@@ -531,8 +555,8 @@ function showMultiplayerResults(data) {
   if (data.p1Answer === correctIndex) player1Streak++; else player1Streak = 0;
   if (data.p2Answer === correctIndex) player2Streak++; else player2Streak = 0;
   
-  const nameP1Str = document.getElementById('name-p1').textContent.replace(':', '');
-  const nameP2Str = document.getElementById('name-p2').textContent.replace(':', '');
+  const nameP1Str = document.getElementById('name-p1').textContent.replace(':', '').trim();
+  const nameP2Str = document.getElementById('name-p2').textContent.replace(':', '').trim();
   document.getElementById('p1-name-result').textContent = nameP1Str;
   document.getElementById('p2-name-result').textContent = nameP2Str;
   
@@ -585,8 +609,8 @@ function showFinalResults() {
   resultsContainer.style.display = 'none';
 
   const winnerTitle = document.getElementById('final-winner-title');
-  const nameP1Str = document.getElementById('name-p1').textContent.replace(':', '');
-  const nameP2Str = document.getElementById('name-p2').textContent.replace(':', '');
+  const nameP1Str = document.getElementById('name-p1').textContent.replace(':', '').trim();
+  const nameP2Str = document.getElementById('name-p2').textContent.replace(':', '').trim();
 
   document.getElementById('final-p1-name').textContent = nameP1Str;
   document.getElementById('final-p2-name').textContent = nameP2Str;
@@ -604,6 +628,16 @@ function showFinalResults() {
     winnerTitle.style.color = "#ffeb3b"; 
   }
 
+  const p1FinalRow = document.getElementById('final-p1-row');
+  const p2FinalRow = document.getElementById('final-p2-row');
+  if (player2Score > player1Score) {
+    p1FinalRow.style.order = "2";
+    p2FinalRow.style.order = "1";
+  } else {
+    p1FinalRow.style.order = "1";
+    p2FinalRow.style.order = "2";
+  }
+
   finalResultsContainer.style.display = 'block';
   localStorage.removeItem('active_trivia_game');
 }
@@ -615,9 +649,12 @@ window.leaveGame = function() {
   hasAnsweredThisRound = false;
   isShowingResults = false;
   
-  // Make sure the waiting screen resets properly if you leave mid-queue
-  waitingScreen.style.display = 'none'; 
+  if (activeQueueRef) {
+      remove(activeQueueRef);
+      onDisconnect(activeQueueRef).cancel();
+  }
   
+  waitingScreen.style.display = 'none'; 
   gameScreen.style.display = 'none';
   scoreboardContainer.style.display = 'none';
   finalResultsContainer.style.display = 'none';
